@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "import_rules_enforcer"
+version = "0.1.0"
+description = "Converts absolute imports to relative if modules have the same parent and relative to absolute if importing from parent of the parent. Replaces import from __all__ if dirrect import is possible"
+authors = ["Tesla2000 <fratajczak124@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+python-dotenv = "^1.0.1"
+pydantic = "^2.8.2"
+libcst = "^1.4.0"
+toml = "^0.10.2"
+more-itertools = "^10.7.0"
+pydantic-settings = "^2.10.1"
+utility-functions = {git = "https://github.com/Tesla2000/UtilityFunctions"}
+pytype = "^2024.10.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+import_rules_enforcer = "import_rules_enforcer:main"
