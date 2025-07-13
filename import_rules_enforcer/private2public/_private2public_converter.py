@@ -16,7 +16,7 @@ class Private2PublicConverter(AccessLevelConverter):
         str_import = Module([updated_node]).code
         parts = re.findall(r"from\s+(\S+)", str_import)[0].split(".")
         parts = self._get_relative_parts(parts)
-        if len(parts) == 1:
+        if len(parts) <= 1:
             return updated_node
         joined_parts = ".".join(parts)
         replacement = ".".join(self._remove_last_private(parts))
@@ -30,6 +30,8 @@ class Private2PublicConverter(AccessLevelConverter):
         if parts[0]:
             imported_path = Path("/".join(parts)).absolute()
             parent = self.abs_filepath.parent
+            if not imported_path.is_relative_to(parent):
+                return ()
             return imported_path.relative_to(parent).parts
         else:
             return tuple(filter(None, parts))

@@ -5,21 +5,22 @@ from pathlib import Path
 from typing import Type
 
 import libcst
+from import_rules_enforcer._import_converter import ImportConverter
+from import_rules_enforcer._settings import create_settings
+from import_rules_enforcer._settings import Settings
+from import_rules_enforcer.absolute2relative import Absolute2RelativeConverter
+from import_rules_enforcer.private2public import Private2PublicConverter
+from import_rules_enforcer.public2private import Public2PrivateConverter
 from import_rules_enforcer.relative2absolute import Relative2AbsoluteConverter
 from utility_functions import file_modification_transaction
-
-from ._import_converter import ImportConverter
-from ._settings import create_settings
-from ._settings import Settings
-from .absolute2relative import Absolute2RelativeConverter
-from .private2public import Private2PublicConverter
-from .public2private import Public2PrivateConverter
 
 
 class Main:
     _path2module: dict[Path, libcst.Module]
     _settings: Settings
-    _modified_paths: set[Path]
+
+    def __init__(self):
+        self._modified_paths: set[Path] = set()
 
     def __call__(self) -> int:
         self._settings = create_settings()
@@ -34,12 +35,8 @@ class Main:
         self._relative2absolute()
         self._private2public()
         self._public2private()
-        if self._modified_paths:
-            print(
-                "Modified files:\n" + "\n".join(map(str, self._modified_paths))
-            )
-            return 1
-        return 0
+        self._modify_files()
+        return bool(self._modified_paths)
 
     def _initialize(
         self, paths: Iterable[Path], contents: Iterable[str]
@@ -60,12 +57,20 @@ class Main:
     def _public2private(self) -> None:
         self._convert(Public2PrivateConverter)
 
-    def _convert(self, converter: Type[ImportConverter]) -> None:
+    def _convert(self, converter_type: Type[ImportConverter]) -> None:
         for path, module in self._path2module.items():
-            converter = converter(path)
-            self._path2module[path] = module.visit(converter)
-            if converter.was_modified:
+            converter_instance = converter_type(path)
+            self._path2module[path] = module.visit(converter_instance)
+            if converter_instance.was_modified:
                 self._modified_paths.add(path)
+
+    def _modify_files(self):
+        for filepath in self._modified_paths:
+            filepath.write_text(self._path2module[filepath].code)
+        if self._modified_paths:
+            print(
+                "Modified files:\n" + "\n".join(map(str, self._modified_paths))
+            )
 
 
 if __name__ == "__main__":

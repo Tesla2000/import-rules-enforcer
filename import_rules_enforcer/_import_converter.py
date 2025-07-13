@@ -19,8 +19,8 @@ class ImportConverter(CSTTransformer, ABC):
     ) -> ImportFrom:
         pass
 
-    @staticmethod
-    def _str2import(import_str: str) -> ImportFrom:
+    def _str2import(self, import_str: str) -> ImportFrom:
+        self.was_modified = True
         updated_node = libcst.parse_statement(import_str).body[0]
         assert isinstance(updated_node, ImportFrom)
         return updated_node

@@ -17,7 +17,11 @@ class Absolute2RelativeConverter(ImportConverter):
         path = re.findall(r"from\s+(\S+)", str_import)[0].split(".")
         imported_path = Path("/".join(path)).absolute()
         parent = self.abs_filepath.parent
+        if self.abs_filepath.parents[1] == Path().absolute():
+            return updated_node
         parent_is_ancestor = imported_path.is_relative_to(parent)
+        if not parent_is_ancestor:
+            return updated_node
         parts = imported_path.relative_to(parent).parts
         if not parent_is_ancestor or not parts:
             return updated_node

@@ -23,6 +23,8 @@ class Public2PrivateConverter(AccessLevelConverter):
         if len(imported_elements) > 1:
             raise ValueError("More than one imported elements")
         imported_element = imported_elements[0]
+        if imported_element not in imports:
+            return updated_node
         import_source = imports[imported_element]
         new_import = re.sub(
             r"from\s+\S+", rf"from {import_source}", str_import, 1

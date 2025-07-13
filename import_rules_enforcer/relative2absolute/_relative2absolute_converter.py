@@ -1,4 +1,6 @@
 import os
+import re
+from pathlib import Path
 
 from import_rules_enforcer._import_converter import ImportConverter
 from libcst import ImportFrom
@@ -12,12 +14,16 @@ class Relative2AbsoluteConverter(ImportConverter):
         parent_level = len(updated_node.relative)
         if parent_level < 2:
             return updated_node
-        self.was_modified = True
-        relative_path_origin = self.abs_filepath.parents[parent_level]
-        absolute_replacement = ".".join(
-            relative_path_origin.relative_to(os.getcwd()).parts
+        relative_path_origin = self.abs_filepath.parents[parent_level - 1]
+        str_import = Module([updated_node]).code
+        parts = tuple(
+            filter(None, re.findall(r"from\s+(\S+)", str_import)[0].split("."))
         )
-        new_import = Module([updated_node]).code.replace(
-            "." * (parent_level - 1), absolute_replacement, 1
+        absolute_path = Path(relative_path_origin.joinpath("/".join(parts)))
+        absolute_replacement = ".".join(
+            absolute_path.relative_to(os.getcwd()).parts
+        )
+        new_import = re.sub(
+            r"from\s+\S+", f"from {absolute_replacement}", str_import, 1
         )
         return self._str2import(new_import)
