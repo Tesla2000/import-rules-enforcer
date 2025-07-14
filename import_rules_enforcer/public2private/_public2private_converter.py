@@ -2,10 +2,10 @@ import re
 from collections.abc import Sequence
 from pathlib import Path
 
+from import_rules_enforcer._access_level_converter import AccessLevelConverter
 from libcst import ImportFrom
 from libcst import Module
 
-from .._access_level_converter import AccessLevelConverter
 from ._get_imports import get_imports
 
 
@@ -17,7 +17,7 @@ class Public2PrivateConverter(AccessLevelConverter):
         parts = re.findall(r"from\s+(\S+)", str_import)[0].split(".")
         if len(parts) > 1 and any(parts):
             return updated_node
-        init_path = self.abs_filepath.parent.joinpath("__init__.py")
+        init_path = Path("/".join(parts) + "/__init__.py").absolute()
         imports = get_imports(init_path)
         imported_elements = self._get_imported_elements(str_import)
         if len(imported_elements) > 1:

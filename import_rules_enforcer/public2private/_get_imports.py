@@ -11,6 +11,8 @@ from libcst import Module
 
 @lru_cache
 def get_imports(filepath: Path) -> dict[str, str]:
+    if not filepath.exists():
+        return {}
     content = filepath.read_text()
     imports = {}
 
