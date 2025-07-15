@@ -17,7 +17,7 @@ class Public2PrivateConverter(AccessLevelConverter):
         parts = re.findall(r"from\s+(\S+)", str_import)[0].split(".")
         if len(parts) > 1 and any(parts):
             return updated_node
-        init_path = Path("/".join(parts) + "/__init__.py").absolute()
+        init_path = self._get_init_path(parts)
         imports = get_imports(init_path)
         imported_elements = self._get_imported_elements(str_import)
         if len(imported_elements) > 1:
@@ -30,6 +30,13 @@ class Public2PrivateConverter(AccessLevelConverter):
             r"from\s+\S+", rf"from {import_source}", str_import, 1
         )
         return self._str2import(new_import)
+
+    def _get_init_path(self, parts: Sequence[str]) -> Path:
+        if any(parts):
+            init_path = Path("/".join(parts)).absolute()
+        else:
+            init_path = self.abs_filepath.parent
+        return init_path.joinpath("__init__.py")
 
     def _get_relative_parts(self, parts: Sequence[str]) -> tuple[str, ...]:
         if parts[0]:
