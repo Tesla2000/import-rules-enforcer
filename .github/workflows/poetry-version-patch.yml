@@ -27,7 +27,8 @@ jobs:
 
       - name: Tag automatically
         uses: mathieudutour/github-tag-action@v6.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: main
-          BUMP: patch
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          release_branches: main
+
