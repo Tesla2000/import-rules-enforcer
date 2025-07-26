@@ -1,3 +1,4 @@
+import os
 import re
 from collections.abc import Sequence
 from pathlib import Path
@@ -15,7 +16,12 @@ class Public2PrivateConverter(AccessLevelConverter):
     ) -> ImportFrom:
         str_import = Module([updated_node]).code
         parts = re.findall(r"from\s+(\S+)", str_import)[0].split(".")
-        if len(parts) > 1 and any(parts):
+        if (
+            len(parts) > 1
+            or not self.abs_filepath.is_relative_to(
+                Path(os.getcwd()).joinpath(parts[0])
+            )
+        ) and any(parts):
             return updated_node
         init_path = self._get_init_path(parts)
         imports = get_imports(init_path)
