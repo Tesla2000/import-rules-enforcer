@@ -1,53 +1,47 @@
-name: Bump and Tag Patch on Main
+name: Bump and Tag Version on Main
 
 permissions:
   contents: write
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
-    types:
-      - closed
+    branches: [main]
+    types: [closed]
 
 jobs:
   bump_and_tag:
+    runs-on: ubuntu-latest
     if: github.event_name == 'push' ||
         (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
-    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout full history
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Poetry
-        run: pip install poetry
+      - run: pip install poetry
+        name: Install Poetry
 
-      - name: Bump version in pyproject.toml
-        run: |
+      - run: |
           poetry version patch
           git config user.name "github-actions[bot]"
           git config user.email "[email protected]"
           git add pyproject.toml
           git commit -m "bump: patch version"
+        name: Bump patch version
 
       - id: tag_version
-        name: Tag version automatically
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: patch
           release_branches: main
 
-      - name: Push bump and tag
-        run: |
-          git push origin main
-          git push origin "${{ steps.tag_version.outputs.new_tag }}"
-
-      - name: Push tag
-        run: git push origin "${{ steps.tag_version.outputs.new_tag }}"
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
