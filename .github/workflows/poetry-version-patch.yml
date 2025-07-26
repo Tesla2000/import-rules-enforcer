@@ -16,14 +16,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python & bump version
+      - name: Bump patch version and commit
         run: |
           pip install poetry
           poetry version patch
-          git commit -am "bump: patch version"
-
-      - name: Push bump commit
-        run: git push origin main
+          git config user.name "github-actions[bot]"
+          git config user.email "[email protected]"
+          git add pyproject.toml
+          git commit -m "bump: patch version"
 
       - name: Tag automatically
         uses: mathieudutour/github-tag-action@v6.2
