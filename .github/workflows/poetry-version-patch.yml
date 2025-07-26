@@ -44,8 +44,10 @@ jobs:
           default_bump: patch
           release_branches: main
 
-      - name: Push bump commit
-        run: git push origin main
+      - name: Push bump and tag
+        run: |
+          git push origin main
+          git push origin "${{ steps.tag_version.outputs.new_tag }}"
 
       - name: Push tag
         run: git push origin "${{ steps.tag_version.outputs.new_tag }}"
