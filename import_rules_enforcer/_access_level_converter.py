@@ -3,6 +3,7 @@ import re
 from abc import ABC
 from contextlib import suppress
 from pathlib import Path
+from typing import NamedTuple
 from typing import Optional
 
 import libcst
@@ -24,28 +25,43 @@ class AccessLevelConverter(ImportConverter, ABC):
             )
 
     def _get_all_elements(self, import_path: str) -> tuple[str, ...]:
-        import_source, elements = re.findall(
-            r"from\s+(\S+)\s+import\s+(.+)", import_path
-        )[0]
-        if import_source.startswith("."):
-            import_source = import_source.lstrip(".")
-            python_file_path = self.abs_filepath.parent.joinpath(
-                import_source.replace(".", "/")
-            ).with_suffix(".py")
-        else:
-            python_file_path = Path(
-                import_source.replace(".", "/")
-            ).with_suffix(".py")
+        import_source, _ = self._split_import2source_and_elements(import_path)
+        python_file_path = self._get_import_path(import_source)
         python_init_file = python_file_path.parent.joinpath("__init__.py")
         if not python_init_file.exists():
-            raise ValueError(f"Init file for {import_path} does not exist")
+            raise ValueError(
+                f"Init file for {import_path} does not exist {self.abs_filepath}"
+            )
         return self._extract_all(python_init_file)
 
     @staticmethod
+    def _split_import2source_and_elements(import_path: str) -> "_ImportSource":
+        return _ImportSource(
+            *re.findall(r"from\s+(\S+)\s+import\s+(.+)", import_path)[0]
+        )
+
+    def _get_import_path(self, import_source: str) -> Path:
+        if import_source.startswith("."):
+            import_source = import_source.lstrip(".")
+            return self.abs_filepath.parent.joinpath(
+                import_source.replace(".", "/")
+            ).with_suffix(".py")
+        else:
+            return Path(import_source.replace(".", "/")).with_suffix(".py")
+
+    @staticmethod
     def _get_imported_elements(import_path: str) -> tuple[str, ...]:
-        elements = re.findall(r"from\s+\S+\s+import\s+(.+)", import_path)[0]
+        elements = re.findall(
+            r"from\s+\S+\s+import\s+\(*\s*(.+)", import_path
+        )[0]
         return tuple(
-            elem.split(" as ")[0].strip() for elem in elements.split(",")
+            filter(
+                None,
+                (
+                    elem.split(" as ")[0].strip()
+                    for elem in elements.split(",")
+                ),
+            )
         )
 
     @staticmethod
@@ -72,6 +88,11 @@ class AccessLevelConverter(ImportConverter, ABC):
         with suppress(_AllFound):
             module.visit(AllExtractor())
         return all_elements
+
+
+class _ImportSource(NamedTuple):
+    source: str
+    elements: str
 
 
 class _AllFound(Exception):

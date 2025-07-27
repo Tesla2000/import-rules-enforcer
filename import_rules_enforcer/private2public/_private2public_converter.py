@@ -18,6 +18,12 @@ class Private2PublicConverter(AccessLevelConverter):
         parts = self._get_relative_parts(parts)
         if len(parts) <= 1:
             return updated_node
+        import_source, _ = self._split_import2source_and_elements(str_import)
+        imported_file = self._get_import_path(import_source)
+        if not imported_file.exists() or not imported_file.name.startswith(
+            "_"
+        ):
+            return updated_node
         joined_parts = ".".join(parts)
         replacement = ".".join(self._remove_last_private(parts))
         new_import = re.sub(
