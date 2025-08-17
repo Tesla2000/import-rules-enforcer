@@ -15,19 +15,28 @@ from libcst import Name
 
 
 class AccessLevelConverter(ImportConverter, ABC):
-    def _check_if_all_defines(self, import_path: str) -> None:
+    def _check_if_all_defines(
+        self, import_path: str, is_init_child: bool = False
+    ) -> None:
         import_source = re.findall(r"from\s+(\S+)", import_path)[0]
-        all_elements = self._get_all_elements(import_path)
+        all_elements = self._get_all_elements(import_path, is_init_child)
         needed_elements = self._get_imported_elements(import_path)
         if not all(map(all_elements.__contains__, needed_elements)):
             raise ValueError(
                 f"Not all needed elements {needed_elements} are defined in __all__ of {import_source}\n{all_elements}"
             )
 
-    def _get_all_elements(self, import_path: str) -> tuple[str, ...]:
+    def _get_all_elements(
+        self, import_path: str, is_init_child: bool
+    ) -> tuple[str, ...]:
         import_source, _ = self._split_import2source_and_elements(import_path)
         python_file_path = self._get_import_path(import_source)
-        python_init_file = python_file_path.parent.joinpath("__init__.py")
+        if not is_init_child:
+            python_init_file = python_file_path.parent.joinpath("__init__.py")
+        else:
+            python_init_file = python_file_path.with_suffix("").joinpath(
+                "__init__.py"
+            )
         if not python_init_file.exists():
             raise ValueError(
                 f"Init file for {import_path} does not exist {self.abs_filepath}"
@@ -69,7 +78,7 @@ class AccessLevelConverter(ImportConverter, ABC):
         all_elements = ()
 
         class AllExtractor(CSTVisitor):
-            def visit_Assign(self, node: "Assign") -> Optional[bool]:
+            def visit_Assign(self, node: Assign) -> Optional[bool]:
                 nonlocal all_elements
                 if len(node.targets) != 1:
                     return super().visit_Assign(node)

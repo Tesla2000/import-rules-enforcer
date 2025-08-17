@@ -2,25 +2,27 @@ import difflib
 import filecmp
 import os
 import shutil
-import sys
 from pathlib import Path
 from unittest import TestCase
 
 
-class TestIntegration(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.expected_path = Path("tests/integration/expected")
-        cls.source_dir = Path("tests/integration/unmodified")
-        cls.test_dir = Path("tests/integration/unmodified_test")
-        cls.root = os.getcwd()
-
-        if not cls.source_dir.exists():
-            raise FileNotFoundError(
-                f"Source directory '{cls.source_dir}' does not exist."
-            )
+class IntegrationBase(TestCase):
+    set_name: str
 
     def setUp(self):
+        self.expected_path = Path(
+            f"tests/integration/{self.set_name}/expected"
+        )
+        self.source_dir = Path(f"tests/integration/{self.set_name}/unmodified")
+        self.test_dir = Path(
+            f"tests/integration/{self.set_name}/unmodified_test"
+        )
+        self.root = os.getcwd()
+
+        if not self.source_dir.exists():
+            raise FileNotFoundError(
+                f"Source directory '{self.source_dir}' does not exist."
+            )
         if self.test_dir.exists():
             shutil.rmtree(self.test_dir)
 
@@ -29,27 +31,6 @@ class TestIntegration(TestCase):
     def tearDown(self):
         if self.test_dir.exists():
             shutil.rmtree(self.test_dir)
-
-    def test_integration(self):
-        sys.argv = (
-            ["foo.py"]
-            + list(
-                map(
-                    str,
-                    map(
-                        lambda path: path.relative_to(self.test_dir),
-                        self.test_dir.rglob("*.py"),
-                    ),
-                )
-            )
-            + ["--root", str(self.test_dir)]
-        )
-        from import_rules_enforcer import Main
-
-        main_runner = Main()
-        assert main_runner()
-        os.chdir(self.root)
-        self.compare_directories(self.expected_path, self.test_dir)
 
     def compare_directories(self, dir1: Path | str, dir2: Path | str):
         """Compares two directories recursively and shows exact file differences."""

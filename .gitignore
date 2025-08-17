@@ -6,5 +6,7 @@
 /.vscode
 *__pycache__
 /docs/build/
-/tests/integration/expected/
-/tests/integration/unmodified/
+/tests/integration/set_1/expected/
+/tests/integration/set_1/unmodified/
+/tests/integration/set_1/
+/tests/integration/set_2/
