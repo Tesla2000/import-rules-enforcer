@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "import_rules_enforcer"
-version = "0.0.13"
+version = "0.0.14"
 description = "Converts absolute imports to relative if modules have the same parent and relative to absolute if importing from parent of the parent. Replaces import from __all__ if dirrect import is possible"
 authors = ["Tesla2000 <fratajczak124@gmail.com>"]
 readme = "README.md"
