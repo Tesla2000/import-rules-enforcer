@@ -65,11 +65,25 @@ class Private2PublicConverter(AccessLevelConverter):
 
     @staticmethod
     def _remove_last_private(parts: Sequence[str]) -> Iterable[str]:
-        return reversed(
-            tuple(
-                dropwhile(
-                    lambda part: part.startswith("_") and part in parts,
-                    reversed(parts),
+        is_relative = parts and not parts[0]
+        if is_relative:
+            return parts[:2] + list(
+                reversed(
+                    tuple(
+                        dropwhile(
+                            lambda part: part.startswith("_")
+                            and part in parts,
+                            reversed(parts[2:]),
+                        )
+                    )
+                )
+            )  # keeping first elements not to remove everything
+        else:
+            return reversed(
+                tuple(
+                    dropwhile(
+                        lambda part: part.startswith("_") and part in parts,
+                        reversed(parts),
+                    )
                 )
             )
-        )
